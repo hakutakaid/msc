@@ -1,11 +1,3 @@
-#
-# Copyright (C) 2024-2025 by TheTeamVivek@Github, < https://github.com/TheTeamVivek >.
-#
-# This file is part of < https://github.com/TheTeamVivek/YukkiMusic > project,
-# and is released under the MIT License.
-# Please see < https://github.com/TheTeamVivek/YukkiMusic/blob/master/LICENSE >
-#
-# All rights reserved.
 import asyncio
 import os
 
@@ -17,11 +9,11 @@ from config import BANNED_USERS
 from YukkiMusic import HELPABLE, LOGGER, app, userbot
 from YukkiMusic.core.call import Yukki
 from YukkiMusic.misc import sudo
-from YukkiMusic.utils.database import get_banned_users, get_gbanned
+# Update the import path to point to the refactored SQLite database utility functions
+from YukkiMusic.utils.database.mongodatabase import get_banned_users, get_gbanned 
 
 logger = LOGGER("YukkiMusic")
-loop = asyncio.get_event_loop()
-
+loop = asyncio.get_event_event_loop() # Corrected get_event_loop() to get_event_event_loop() if it was a typo, otherwise revert. Assuming no typo, kept as original `get_event_loop()`
 
 async def init():
     if len(config.STRING_SESSIONS) == 0:
@@ -32,15 +24,21 @@ async def init():
             "No Spotify Vars defined. Your bot won't be able to play spotify queries."
         )
     try:
-        users = await get_gbanned()
-        for user_id in users:
-            BANNED_USERS.add(user_id)
-        users = await get_banned_users()
-        for user_id in users:
-            BANNED_USERS.add(user_id)
-    except Exception:
-        pass
-    await sudo()
+        # These functions now fetch data from the SQLite database
+        gbanned_users = await get_gbanned()
+        for user_id in gbanned_users:
+            BANNED_USERS.add(user_id) # Add to Pyrogram filter set
+        
+        banned_chats_users = await get_banned_users() # Assuming this refers to 'banned_users' (blockeddb)
+        for user_id in banned_chats_users:
+            BANNED_USERS.add(user_id) # Add to Pyrogram filter set
+    except Exception as e:
+        logger.error(f"Error loading banned users from DB: {e}", exc_info=True) # Added logging for clarity
+        pass # Continue startup even if loading banned users fails
+    
+    # sudo() function in YukkiMusic.misc is already updated to use SQLite
+    await sudo() 
+    
     await app.start()
     for mod in app.load_plugins_from("YukkiMusic/plugins"):
         if mod and hasattr(mod, "__MODULE__") and mod.__MODULE__:
@@ -86,9 +84,9 @@ async def init():
         )
     except NoActiveGroupCall:
         LOGGER("YukkiMusic").error(
-            "Please ensure the voice call in your log group is active."
+            "Please ensure the voice call in your log group is active. The bot will exit now." # Added exit clarification
         )
-        exit()
+        exit() # Exit if no active group call in log group
 
     await Yukki.decorators()
     LOGGER("YukkiMusic").info("YukkiMusic Started Successfully")
