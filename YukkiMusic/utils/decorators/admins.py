@@ -1,19 +1,9 @@
-#
-# Copyright (C) 2024-2025 by TheTeamVivek@Github, < https://github.com/TheTeamVivek >.
-#
-# This file is part of < https://github.com/TheTeamVivek/YukkiMusic > project,
-# and is released under the MIT License.
-# Please see < https://github.com/TheTeamVivek/YukkiMusic/blob/master/LICENSE >
-#
-# All rights reserved.
-#
-
 from pyrogram.enums import ChatMemberStatus, ChatType
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from config import adminlist
 from strings import get_string
-from YukkiMusic import app
+# REMOVED: from YukkiMusic import app
 from YukkiMusic.misc import SUDOERS
 from YukkiMusic.utils.database import (
     get_authuser_names,
@@ -30,6 +20,9 @@ from ..formatters import int_to_alpha
 
 def AdminRightsCheck(mystic):
     async def wrapper(client, message):
+        # Import app locally within the wrapper where it's used
+        from YukkiMusic import app 
+
         if not await is_maintenance():
             if message.from_user.id not in SUDOERS:
                 return
@@ -60,7 +53,7 @@ def AdminRightsCheck(mystic):
             if chat_id is None:
                 return await message.reply_text(_["setting_12"])
             try:
-                await app.get_chat(chat_id)
+                await app.get_chat(chat_id) # Uses app
             except Exception:
                 return await message.reply_text(_["cplay_4"])
         else:
@@ -83,6 +76,8 @@ def AdminRightsCheck(mystic):
 
 def AdminActual(mystic):
     async def wrapper(client, message):
+        # AdminActual doesn't seem to directly use 'app', so no local import needed here
+        
         if not await is_maintenance():
             if message.from_user.id not in SUDOERS:
                 return
@@ -114,6 +109,7 @@ def AdminActual(mystic):
 
         if message.from_user.id not in SUDOERS:
             try:
+                # client.get_chat_member is used here, not app.get_chat_member
                 member = await client.get_chat_member(
                     message.chat.id, message.from_user.id
                 )
@@ -137,6 +133,9 @@ def AdminActual(mystic):
 
 def ActualAdminCB(mystic):
     async def wrapper(client, query):
+        # Import app locally within the wrapper where it's used
+        from YukkiMusic import app
+
         try:
             language = await get_lang(query.message.chat.id)
             _ = get_string(language)
@@ -156,7 +155,7 @@ def ActualAdminCB(mystic):
         is_non_admin = await is_nonadmin_chat(query.message.chat.id)
         if not is_non_admin:
             try:
-                a = await app.get_chat_member(
+                a = await app.get_chat_member( # Uses app
                     query.message.chat.id,
                     query.from_user.id,
                 )
