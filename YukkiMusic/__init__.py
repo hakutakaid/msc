@@ -15,10 +15,17 @@ _asyncio.set_event_loop_policy(_uvloop.EventLoopPolicy())  # noqa
 from YukkiMusic.core.bot import YukkiBot
 from YukkiMusic.core.dir import dirr
 from YukkiMusic.core.git import git
-from YukkiMusic.core.userbot import Userbot
-from YukkiMusic.misc import dbb, heroku
+from YukkiMusic.core.userbot import Userbot # Import the Userbot class
 
-from .logging import LOGGER
+# --- Define core objects (app, userbot, SUDOERS) before other imports that might depend on them ---
+app = YukkiBot()
+userbot = Userbot() # Instantiate Userbot here
+SUDOERS = set() # Define SUDOERS here. It will be populated later in __main__.py's init() or misc.py's sudo()
+# --- End of core object definition ---
+
+from YukkiMusic.misc import dbb, heroku # Now import misc after core objects are defined
+
+from .logging import LOGGER # This import is fine
 
 # Directories
 dirr()
@@ -26,13 +33,10 @@ dirr()
 # Check Git Updates
 git()
 
-# Initialize Memory DB
-dbb()
+# Initialize Memory DB (dbb from misc.py)
+dbb() 
 
-# Heroku APP
+# Heroku APP (heroku from misc.py)
 heroku()
 
-app = YukkiBot()
-userbot = Userbot()
-
-HELPABLE = {}
+HELPABLE = {} # Define HELPABLE globally here
