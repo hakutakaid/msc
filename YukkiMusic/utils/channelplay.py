@@ -1,19 +1,12 @@
-#
-# Copyright (C) 2024-2025 by TheTeamVivek@Github, < https://github.com/TheTeamVivek >.
-#
-# This file is part of < https://github.com/TheTeamVivek/YukkiMusic > project,
-# and is released under the MIT License.
-# Please see < https://github.com/TheTeamVivek/YukkiMusic/blob/master/LICENSE >
-#
-# All rights reserved.
-#
+# YukkiMusic/utils/channelplay.py
 
-
-from YukkiMusic import app
+# Removed: from YukkiMusic import app
 from YukkiMusic.utils.database import get_cmode
 
-
 async def get_channeplayCB(_, command, query):
+    # Import app here, inside the function, to break the circular dependency
+    from YukkiMusic import app 
+    
     if command == "c":
         chat_id = await get_cmode(query.message.chat.id)
         if chat_id is None:
