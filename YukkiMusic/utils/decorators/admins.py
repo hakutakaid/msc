@@ -3,8 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from config import adminlist
 from strings import get_string
-# REMOVED: from YukkiMusic import app
-from YukkiMusic.misc import SUDOERS
+from YukkiMusic import SUDOERS
 from YukkiMusic.utils.database import (
     get_authuser_names,
     get_cmode,
