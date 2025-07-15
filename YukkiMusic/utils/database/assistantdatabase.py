@@ -3,7 +3,7 @@ import sqlite3
 
 from pytgcalls import PyTgCalls
 
-from YukkiMusic import userbot
+# REMOVED: from YukkiMusic import userbot
 from YukkiMusic.core.sqlite import get_db_connection, DB_FILE # Import from your new sqlite.py
 
 # A simple in-memory cache, similar to the original assistantdict
@@ -17,6 +17,8 @@ async def get_client(assistant: int):
     Retrieves the userbot client for a given assistant number.
     This part remains the same as it interacts with the userbot module, not the database.
     """
+    # Import userbot locally here
+    from YukkiMusic import userbot
     clients = userbot.clients
     if 1 <= assistant <= len(userbot.clients):
         return clients[assistant - 1]
@@ -53,7 +55,8 @@ async def set_assistant(chat_id: int):
     Selects and sets a random assistant for a chat_id,
     prioritizing a different one if one is currently set.
     """
-    from YukkiMusic.core.userbot import assistants
+    from YukkiMusic.core.userbot import assistants # This import is fine as it's from core.userbot
+    from YukkiMusic import userbot # Import userbot locally here too, if get_client needs it
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -69,12 +72,18 @@ async def set_assistant(chat_id: int):
     finally:
         conn.close()
 
+    # Ensure assistants list is not empty before random.choice
+    if not assistants:
+        # Handle case where no assistants are configured
+        print("Warning: No assistants available in userbot.assistants.")
+        return None # Or raise an error, depending on desired behavior
+
     available_assistants = [assi for assi in assistants if assi != current_assistant]
 
-    if not available_assistants or len(available_assistants) <= 1: # Added check for empty list
-        ran_assistant = random.choice(assistants)
+    if not available_assistants: # If only one assistant, or current assistant is the only one
+        ran_assistant = random.choice(assistants) # Pick from all
     else:
-        ran_assistant = random.choice(available_assistants)
+        ran_assistant = random.choice(available_assistants) # Pick from available
 
     assistantdict[chat_id] = ran_assistant
     
@@ -100,7 +109,8 @@ async def get_assistant(chat_id: int):
     """
     Retrieves the assistant for a given chat_id, falling back to setting one if not found or invalid.
     """
-    from YukkiMusic.core.userbot import assistants
+    from YukkiMusic.core.userbot import assistants # This import is fine as it's from core.userbot
+    # No need to import userbot here if get_client is handling it
 
     # 1. Check in-memory cache
     assistant = assistantdict.get(chat_id)
@@ -150,7 +160,11 @@ async def set_calls_assistant(chat_id: int):
     Selects and sets a random assistant for calls for a chat_id.
     This function seems to be specifically for PyTgCalls related assistant selection.
     """
-    from YukkiMusic.core.userbot import assistants
+    from YukkiMusic.core.userbot import assistants # This import is fine
+
+    if not assistants: # Defensive check
+        print("Warning: No assistants available for calls in userbot.assistants.")
+        return None
 
     ran_assistant = random.choice(assistants)
     assistantdict[chat_id] = ran_assistant
@@ -175,7 +189,7 @@ async def group_assistant(self, chat_id: int) -> PyTgCalls:
     """
     Determines and returns the PyTgCalls instance for a given chat_id.
     """
-    from YukkiMusic.core.userbot import assistants
+    from YukkiMusic.core.userbot import assistants # This import is fine
 
     # 1. Check in-memory cache
     assistant_num = assistantdict.get(chat_id)
@@ -214,9 +228,13 @@ async def group_assistant(self, chat_id: int) -> PyTgCalls:
             # Not in DB, set a new one
             assis = await set_calls_assistant(chat_id)
 
+    # Defensive check: ensure assis is not None if set_calls_assistant could return None
+    if assis is None:
+        raise ValueError("Failed to determine an assistant for PyTgCalls.")
+
     assistant_index = int(assis) - 1
 
     if 0 <= assistant_index < len(self.calls):
         return self.calls[assistant_index]
     else:
-        raise ValueError(f"Assistant index {assistant_index + 1} is out of range. Please check your assistant configuration.")
+        raise ValueError(f"Assistant index {assistant_index + 1} is out of range for available PyTgCalls instances ({len(self.calls)}). Please check your assistant configuration.")
